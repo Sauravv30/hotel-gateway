@@ -17,25 +17,12 @@ import reactor.core.publisher.Mono;
 @EnableDiscoveryClient
 public class GatewayApplication {
 
-    /**
-     * The entry point of application.
-     *
-     * @param args the input arguments
-     */
-    public static void main(String[] args) {
+	/**
+	 * The entry point of application.
+	 *
+	 * @param args the input arguments
+	 */
+	public static void main(String[] args) {
 		SpringApplication.run(GatewayApplication.class, args);
 	}
-
-//	@Bean
-//	public GlobalFilter customErrorFilter() {
-//		return (exchange, chain) -> {
-//			return chain.filter(exchange)
-//					.onErrorResume(ex -> {
-//						// Handle the error and return a custom error response
-//						return Mono.error(new CustomException("Gateway Error"));
-//					});
-//		};
-//	}
-
-	}
-
+}
