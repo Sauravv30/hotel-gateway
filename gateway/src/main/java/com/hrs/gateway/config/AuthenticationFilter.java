@@ -1,11 +1,9 @@
 package com.hrs.gateway.config;
 
 import io.jsonwebtoken.Claims;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
-import org.springframework.cloud.gateway.route.builder.GatewayFilterSpec;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
@@ -51,7 +49,48 @@ public class AuthenticationFilter implements GatewayFilter {
 
             this.updateRequest(exchange, token);
         }
+
+            // Get the current path
+            String originalPath = exchange.getRequest().getPath().toString();
+
+            // Check if the path contains "userInfo"
+        exchange = updateWebExchangePathIfRequired(exchange, originalPath);
+
         return chain.filter(exchange);
+
+    }
+
+    private ServerWebExchange updateWebExchangePathIfRequired(ServerWebExchange exchange, String originalPath) {
+        if (originalPath.contains("userInfo")) {
+            // Modify the path by replacing "userInfo" with the userId from the token
+            String modifiedPath = originalPath.replace("userInfo", jwtUtil.getAllClaimsFromToken(getAuthHeader(exchange.getRequest())).get("userId").toString());
+
+            // Set the modified path in the request
+            exchange = exchange.mutate()
+                    .request(exchange.getRequest().mutate().path(modifiedPath).build())
+                    .build();
+        }
+        return exchange;
+    }
+
+    private Mono<Void> handleException(Throwable ex, ServerWebExchange exchange) {
+        // Customize the error response based on the exception
+        HttpStatus httpStatus = determineHttpStatus(ex);
+
+        // You can also log the exception or perform other actions here
+
+        // Set a custom response message
+        exchange.getResponse().setStatusCode(httpStatus);
+        exchange.getResponse().getHeaders().add("Content-Type", "application/json");
+        String responseBody = "{\"error\": \"" + ex.getMessage() + "\"}";
+        return exchange.getResponse().writeWith(Mono.just(exchange.getResponse()
+                .bufferFactory().wrap(responseBody.getBytes())));
+    }
+
+    private HttpStatus determineHttpStatus(Throwable ex) {
+        // Determine the appropriate HTTP status based on the exception type
+        // You can customize this logic based on your requirements
+        return HttpStatus.INTERNAL_SERVER_ERROR;
     }
 
     private Mono<Void> onError(ServerWebExchange exchange, HttpStatus httpStatus) {
