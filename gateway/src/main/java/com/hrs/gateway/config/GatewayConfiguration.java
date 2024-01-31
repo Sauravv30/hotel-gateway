@@ -1,5 +1,6 @@
 package com.hrs.gateway.config;
 
+import com.hrs.gateway.exceptionHandler.CustomException;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.cloud.gateway.route.builder.UriSpec;
@@ -37,18 +38,7 @@ public class GatewayConfiguration {
     @Bean
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
-                .route("User-Service", route -> route.path("/user/**").filters(f-> f.filter((exchange, chain) ->
-                        {
-                            ServerHttpRequest req = exchange.getRequest();
-                            addOriginalRequestUrl(exchange, req.getURI());
-                            String path = req.getURI().getRawPath();
-                            String newPath = path.replaceAll(
-                                    "userId","")
-                                    ;
-                            ServerHttpRequest request = req.mutate().path(newPath).build();
-                            exchange.getAttributes().put(GATEWAY_REQUEST_URL_ATTR, request.getURI());
-                            return chain.filter(exchange.mutate().request(request).build());
-                        }))
+                .route("User-Service", route -> route.path("/user/**").filters(f-> f.filter(authFilter))
                         .uri("lb://USER-SERVICE"))
                 .route("Hotel-Service", r -> r.path("/hotel/**", "/room/**").filters(f-> f.filter(authFilter))
                         .uri("lb://HOTEL-SERVICE"))
