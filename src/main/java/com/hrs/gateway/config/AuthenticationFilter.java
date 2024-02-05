@@ -1,5 +1,6 @@
 package com.hrs.gateway.config;
 
+import com.hrs.gateway.exceptionHandler.CustomException;
 import io.jsonwebtoken.Claims;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
@@ -55,8 +56,12 @@ public class AuthenticationFilter implements GatewayFilter {
 
             // Check if the path contains "userInfo"
         exchange = updateWebExchangePathIfRequired(exchange, originalPath);
-
-        return chain.filter(exchange);
+        try{
+            return chain.filter(exchange);
+        }
+        catch (Exception e){
+            throw new CustomException(e);
+        }
 
     }
 
